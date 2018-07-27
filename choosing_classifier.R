@@ -6,7 +6,7 @@ choosing_classifier <- function(my_list){
   #cross validation sui dati di training per individuare il miglior 
   #classificatore
 
-  n_classifiers <- 1
+  n_classifiers <- 1:3
   n_folds <- 5
   folds_i <- sample(rep(1:n_folds, length.out = nrow(my_list$scaled_training)))
   
@@ -16,7 +16,7 @@ choosing_classifier <- function(my_list){
   #colonne = 3 parametri)
   
   classification_parameter <- lapply(n_classifiers,function(n_classifiers)matrix(0, nrow = n_folds, ncol = 3))
-  names(classification_parameter) <- c("Linear_SVM")#,"Gaussian_SVM","Polinomial_SVM")
+  names(classification_parameter) <- c("Linear_SVM","Gaussian_SVM","Polinomial_SVM")
   for (k in 1:n_folds) {
     # per ogni run associamo al test_i il k-esimo pacchetto
     test_i <- which(folds_i == k)
@@ -27,8 +27,8 @@ choosing_classifier <- function(my_list){
     label_test <- my_list$label_train[test_i]
     
     classification_parameter$Linear_SVM[k,] <- linear_SVM(train,label_train,test,label_test)
-    #classification_parameter$Gaussian_SVM[k,] <- gaussian_SVM(train,label_train,test,label_test)
-    #classification_parameter$Polinomial_SVM[k,] <- polinomial_SVM(train,label_train,test,label_test)
+    classification_parameter$Gaussian_SVM[k,] <- gaussian_SVM(train,label_train,test,label_test)
+    classification_parameter$Polinomial_SVM[k,] <- polinomial_SVM(train,label_train,test,label_test)
     print(classification_parameter)    
   }
   #per ogni matrice con i risultati,

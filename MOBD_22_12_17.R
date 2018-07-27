@@ -2,6 +2,7 @@ set.seed(123)
 library("dplyr")
 library("LiblineaR")
 library("e1071")
+library("FSelector")
 source("data_understanding.R")
 source("data_preparation.R")
 source("split.R")
@@ -17,10 +18,19 @@ my_dir <- getwd()
 data_calcio <- read.csv(paste(my_dir,"training_R.csv",sep="/"),sep = ";")
 data_summary <- data_understanding(data_calcio)
 cleaned_data <- data_preparation(data_calcio)
-new_summary_attribute <- lapply(cleaned_data,summary)
+data_2 <- relief(label~.,cleaned_data, neighbours.count = 10, sample.size = 20)
+write.table(data, file="relief2.dat")
+
+useful_feature <- rownames(subset(data, attr_importance > 10E-4))
+rownames(subset(data_2, attr_importance > 10E-4))
+
+fs_data <- cleaned_data[, c(useful_feature,"label")]
+
+
+new_summary_attribute <- lapply(fs_data,summary)
 #dal momento che le classi non sono perfettamente bilanciate
 #è preferibile utilizzare uno split training-test bilanciato 
-my_split <- split(cleaned_data)
+my_split <- split(fs_data)
 normalized_split <- data_normalization(my_split)
 #supponiamo di aver individuato (mediante ricerca in letteratura tre classificatori adatti al nostro 
 #problema). Utilizziamo quindi la cross-validation sui dati di training per scegliere il/i migliori.
