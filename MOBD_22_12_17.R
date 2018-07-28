@@ -22,7 +22,7 @@ data_2 <- relief(label~.,cleaned_data, neighbours.count = 10, sample.size = 20)
 write.table(data, file="relief2.dat")
 
 useful_feature <- rownames(subset(data, attr_importance > 10E-4))
-rownames(subset(data_2, attr_importance > 10E-4))
+rownames(subset(data, attr_importance > 10E-4))
 
 fs_data <- cleaned_data[, c(useful_feature,"label")]
 

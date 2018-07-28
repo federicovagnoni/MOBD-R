@@ -14,8 +14,7 @@ c_linear_SVM <- function(TR,YTR,TS,YTS,c){
   confusion_matrix<-table(predicted=test_prediction$predictions,observation=YTS)
   #nella matrice di confusione:
   #elemento [i,j] classe predetta i classe reale j
-  accuracy <- round((confusion_matrix["A","A"]+confusion_matrix["B","B"]+confusion_matrix["x","x"])/
-                      nrow(TS),4)
+  accuracy <- round((confusion_matrix["1","1"]+confusion_matrix["0","0"]/nrow(TS)),4)
   
   
   TPR_1 <- round(((confusion_matrix["1","1"])/(confusion_matrix["1","1"]+confusion_matrix["0","1"])),4)

@@ -7,7 +7,8 @@ choosing_classifier <- function(my_list){
   #classificatore
 
   n_classifiers <- 1:3
-  n_folds <- 5
+  n_folds <- 10
+  n_folds
   folds_i <- sample(rep(1:n_folds, length.out = nrow(my_list$scaled_training)))
   
   #creiamo una lista contenente 3 matrici, in ognuna delle quali salveremo 

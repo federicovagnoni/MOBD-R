@@ -13,13 +13,12 @@ opt_classifier <- function(TR,YTR,TS,YTS){
   confusion_matrix<-table(predicted=test_prediction$predictions,observation=YTS)
   #nella matrice di confusione:
   #elemento [i,j] classe predetta i classe reale j
-  accuracy <- round((confusion_matrix["A","A"]+confusion_matrix["B","B"]+confusion_matrix["x","x"])/
+  accuracy <- round((confusion_matrix["1","1"]+confusion_matrix["0","0"])/
                       nrow(TS),4)
   
   
-  TPR_A <- round(((confusion_matrix["A","A"])/(confusion_matrix["A","A"]+confusion_matrix["B","A"]+confusion_matrix["x","A"])),4)
-  TPR_B <- round(((confusion_matrix["B","B"])/(confusion_matrix["B","B"]+confusion_matrix["A","B"]+confusion_matrix["x","B"])),4)
-  TPR_x <- round(((confusion_matrix["x","x"])/(confusion_matrix["x","x"]+confusion_matrix["A","x"]+confusion_matrix["B","x"])),4)
-  
-  return(c(accuracy,TPR_A,TPR_B,TPR_x))
+  TPR_1 <- round(((confusion_matrix["1","1"])/(confusion_matrix["1","1"]+confusion_matrix["0","1"])),4)
+  TPR_0 <- round(((confusion_matrix["0","0"])/(confusion_matrix["0","0"]+confusion_matrix["1","0"])),4)
+
+  return(c(accuracy,TPR_A,TPR_B))
 }
