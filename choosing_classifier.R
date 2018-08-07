@@ -6,9 +6,9 @@ choosing_classifier <- function(my_list){
   #cross validation sui dati di training per individuare il miglior 
   #classificatore
 
+  print(nrow(my_list$scaled_training))
   n_classifiers <- 1:3
-  n_folds <- 10
-  n_folds
+  n_folds <- 5
   folds_i <- sample(rep(1:n_folds, length.out = nrow(my_list$scaled_training)))
   
   #creiamo una lista contenente 3 matrici, in ognuna delle quali salveremo 
@@ -22,7 +22,9 @@ choosing_classifier <- function(my_list){
     # per ogni run associamo al test_i il k-esimo pacchetto
     test_i <- which(folds_i == k)
     train <- my_list$scaled_training[-test_i, ]
+    print(nrow(train))
     test <- my_list$scaled_training[test_i, ]
+    print(nrow(test))
     
     label_train <- my_list$label_train[-test_i]
     label_test <- my_list$label_train[test_i]

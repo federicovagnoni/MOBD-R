@@ -11,7 +11,7 @@ data_normalization <- function(my_data){
   scaled_training <- scale(data_train,center = T,scale = T)
   scaled_test <- scale(data_test,attr(scaled_training,"scaled:center"),attr(scaled_training,"scaled:scale"))
   
-  output <- list(scaled_training,label_train,scaled_test,label_test)
+  output <- list(scaled_training,as.factor(label_train),scaled_test,as.factor(label_test))
   names(output) <- c("scaled_training","label_train","scaled_test","label_test")
   return(output)
 }
