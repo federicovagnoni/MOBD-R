@@ -1,5 +1,4 @@
-#my_data= lista contenete training e test ottenuti 
-#utilizzando la funzione split
+# my_data: lista contenente training e test ottenuti utilizzando la funzione split
 
 data_normalization <- function(my_data){
   data_train <- my_data$training_set[,1:(ncol(my_data$training_set)-1)]
