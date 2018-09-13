@@ -9,66 +9,70 @@ library(randomForest)
 library(PredPsych)
 
 
+# Carichiamo il dataset ed effettuiamo le operazioni preliminare di analisi e preparazione
 
 my_dir <- getwd() 
-data_calcio <- read.csv(paste(my_dir,"training_R.csv",sep="/"),sep = ";")
-data_summary <- data_understanding(data_calcio)
-dataset <- data_preparation(data_calcio, 35)
+dataset <- read.csv(paste(my_dir,"training_R.csv",sep="/"),sep = ";")
+data_summary <- data_understanding(dataset)
+dataset <- data_preparation(dataset)
 
-# Procedura standard per vedere qual è il motodo migliore!
-# Tutti usano i dati normalizzati!
 
+# Scegliamo il classificatore migliore
+# molti di questi, basandosi su funzioni di distanza o similarità, sono sensibili a valori con scale differenti
+# pertanto, il dataset verrà normalizzato.
+
+# prepariamo training e test set per poi normalizzarli
 my_split <- split(dataset)
 normalized_split <- data_normalization(my_split)
 
+# Impostiamo la metodologia di training come "Cross-Validation" 10-fold
 control <- trainControl(method="cv", number=10)
 metric <- "Accuracy"
 
 # a) linear algorithms
 set.seed(7)
 fit.lda <- train(y = normalized_split$label_train, x = normalized_split$scaled_training, method="lda", metric=metric, trControl=control)
+
 # b) nonlinear algorithms
 # CART
 set.seed(7)
 fit.cart <- train(y = normalized_split$label_train, x = normalized_split$scaled_training, method="rpart", metric=metric, trControl=control)
+
 # kNN
 set.seed(7)
 fit.knn <- train(y = normalized_split$label_train, x = normalized_split$scaled_training, method="knn", metric=metric, trControl=control)
-# c) advanced algorithms
-# SVM
-set.seed(7)
-fit.svm <- train(y = normalized_split$label_train, x = normalized_split$scaled_training, method="svmRadial", metric=metric, trControl=control)
-# Random Forest
-set.seed(7)
-fit.rf <- train(y = normalized_split$label_train, x = normalized_split$scaled_training, method="rf", metric=metric, trControl=control)
 
+# c) advanced algorithms
+# Random Forest
+# L'algoritmo delle RandomForest è invariante rispetto a eventuale scaling o altre trasformazioni di dati
+# pertanto, il suo addestramento si baserà sul training set non mutato.
+set.seed(7)
+fit.rf <- train(y = my_split$training_set$label, x = my_split$training_set, method="rf", metric=metric, trControl=control)
+
+
+# Collezioniamo i dati e presentiamoli in una tabella riassuntiva
 results <- resamples(list(lda=fit.lda, cart=fit.cart, knn=fit.knn, svm=fit.svm, rf=fit.rf))
 summary(results)
 
+# Notiamo a questo punto che l'algoritmo delle RandomForest presenta i risultati migliori rispetto agli altri metodi
 
-summary(dataset)
 
-# fscore_extraction
+# Estraiamo a questo punto una classifica delle feature che presentano in ordine decrescente
+# il più alto F-Score. E' stato notato in diversi paper che tale operazione di feature selection risulta
+# essere determinante per ottenere una classificazione più accurata
 top_attributes <- fscore_extraction(dataset)
 
-# solito split
+# Rimpiazziamo inoltre una delle top features che presentano un elevato numero di outliers
+dataset$num_imgs <- replace_outlier(dataset$num_imgs)
+
+
+# Procediamo quindi allo split di training e test set
 my_split <- split(dataset)
-normalized_split <- data_normalization(my_split)
 
-# Verifica l'accuratezza aumentando il numero delle feature migliori da 10 a 59, con passi da 5
-# usando una SVM con Kernel Lineare
-for (i in seq(10,59, by = 5)) {
-  set.seed(456)
-  control <- trainControl(method="cv", number=5)
-  fit.glm <- train(y = normalized_split$label_train, x = normalized_split$scaled_training[,top_attributes[1:i]], method="svmLinear", metric=metric, trControl=control)
-  print(i)
-  print(fit.glm[["results"]][["Accuracy"]])
-  summary(fit.glm)
-}
 
-# Verifica l'accuratezza delle RandomForest aumentando il numero delle feature da 20 a 60, con passo di 5
+# Si verifica ora, l'accuratezza delle RandomForest aumentando il numero delle feature da 20 a 60, con passo di 5
 for (i in seq(20,60, by = 5)) {
-  set.seed(456)
+  set.seed(7)
   normalized_split$scaled_training[,top_attributes[1:i]]
   rf <- train(y = normalized_split$label_train, x = normalized_split$scaled_training[,top_attributes[1:i]], method="rf", metric=metric, trControl=control)
 
@@ -80,30 +84,17 @@ for (i in seq(20,60, by = 5)) {
 }
 
 
-# Verifica l'accuratezza usando il solo split (non normalizzato) variando il numero mtry
+# Si determina a questo punto che il miglior risultato è ottenuto tramite l'utilizzo delle top-35 features.
+# Eseguiamo quindi iil training con cross-validation (5-fold)
 
-for (i in 5:10) {
-  rf <- randomForest(label ~ ., data = my_split$training_set, ntree = 500, mtry = i)
-  
-  # Verifica l'efficacia sul training set stesso
-  predictions <- predict(rf, my_split$training_set)
-  r <- confusionMatrix(predictions, my_split$training_set$label)
-  print(i)
-  print(r)
-  
-  # Verifica l'efficacia sul test set
-  predictions <- predict(rf, my_split$test_set)
-  r <- confusionMatrix(predictions, my_split$test_set$label)
-  print("sul test")
-  print(r)
-}
-
-# Training con cross-validation (5-fold) usando random forest
+set.seed(7)
 control <- trainControl(method="cv", number=5)
-rf <- train(label ~ ., data = my_split$training_set, method="rf", metric=metric, trControl=control)
+metric <- "Accuracy"
+rf_tot <- train(label ~ ., data = my_split$training_set[,c(top_attributes[1:35],"label")], method="rf", metric=metric, trControl=control)
 
-# Verifica l'efficacia sul test set
-predictions <- predict(rf, my_split$test_set)
+
+# Verifichiamo l'efficacia sul test set
+predictions <- predict(rf_tot$finalModel, my_split$test_set[,c(top_attributes[1:35],"label")])
 r <- confusionMatrix(predictions, my_split$test_set$label)
 print(r)
 
