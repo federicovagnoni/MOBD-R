@@ -25,8 +25,8 @@ dataset <- data_preparation(dataset)
 my_split <- split(dataset)
 normalized_split <- data_normalization(my_split)
 
-# Impostiamo la metodologia di training come "Cross-Validation" 10-fold
-control <- trainControl(method="cv", number=10)
+# Impostiamo la metodologia di training come "Cross-Validation" 5-fold
+control <- trainControl(method="cv", number=5)
 metric <- "Accuracy"
 
 # a) linear algorithms
@@ -47,11 +47,10 @@ fit.knn <- train(y = normalized_split$label_train, x = normalized_split$scaled_t
 # L'algoritmo delle RandomForest è invariante rispetto a eventuale scaling o altre trasformazioni di dati
 # pertanto, il suo addestramento si baserà sul training set non mutato.
 set.seed(7)
-fit.rf <- train(y = my_split$training_set$label, x = my_split$training_set, method="rf", metric=metric, trControl=control)
-
+fit.rf <- train(label ~ ., data = my_split$training_set, method="rf", metric=metric, trControl=control)
 
 # Collezioniamo i dati e presentiamoli in una tabella riassuntiva
-results <- resamples(list(lda=fit.lda, cart=fit.cart, knn=fit.knn, svm=fit.svm, rf=fit.rf))
+results <- resamples(list(lda=fit.lda, cart=fit.cart, knn=fit.knn, rf=fit.rf))
 summary(results)
 
 # Notiamo a questo punto che l'algoritmo delle RandomForest presenta i risultati migliori rispetto agli altri metodi
@@ -84,7 +83,9 @@ for (i in seq(20,60, by = 5)) {
 }
 
 
-# Si determina a questo punto che il miglior risultato è ottenuto tramite l'utilizzo delle top-35 features.
+# Si determina a questo punto che il miglior risultato è ottenuto tramite l'utilizzo di tutte le feature.
+# Ciononostante è allo stesso modo importante osservare come il tempo necessario all'operazione di classificazione
+# lo sia allo stesso modo. Il miglior rapporto tempo-accuratezza è ottenuto tramite l'utilizzo delle top-35 features.
 # Eseguiamo quindi iil training con cross-validation (5-fold)
 
 set.seed(7)
@@ -94,7 +95,9 @@ rf_tot <- train(label ~ ., data = my_split$training_set[,c(top_attributes[1:35],
 
 
 # Verifichiamo l'efficacia sul test set
-predictions <- predict(rf_tot$finalModel, my_split$test_set[,c(top_attributes[1:35],"label")])
+# il test set viene inserito in questo punto
+# ATTENZIONE: utilizzare le sole top-35 features tra quelle disponibili
+predictions <- predict(rf_tot, my_split$test_set[,c(top_attributes[1:35],"label")])
 r <- confusionMatrix(predictions, my_split$test_set$label)
 print(r)
 
